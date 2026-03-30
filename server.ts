@@ -1,6 +1,5 @@
 import "dotenv/config";
 import express from "express";
-import { createServer as createViteServer } from "vite";
 import { GoogleGenAI } from "@google/genai";
 import path from "path";
 import { fileURLToPath } from "url";
@@ -8,13 +7,10 @@ import { fileURLToPath } from "url";
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-async function startServer() {
-  const app = express();
-  const PORT = 3000;
+export function createApiRouter() {
+  const router = express.Router();
 
-  app.use(express.json());
-
-  app.post("/api/agent", async (req, res) => {
+  router.post("/agent", async (req, res) => {
     const { input } = req.body;
 
     if (!input) {
@@ -52,8 +48,19 @@ async function startServer() {
     }
   });
 
+  return router;
+}
+
+export async function createApp() {
+  const app = express();
+  app.use(express.json());
+
+  // Mount API routes
+  app.use("/api", createApiRouter());
+
   // Vite middleware for development
   if (process.env.NODE_ENV !== "production") {
+    const { createServer: createViteServer } = await import("vite");
     const vite = await createViteServer({
       server: { middlewareMode: true },
       appType: "spa",
@@ -67,9 +74,15 @@ async function startServer() {
     });
   }
 
-  app.listen(PORT, "0.0.0.0", () => {
-    console.log(`Server running on http://localhost:${PORT}`);
-  });
+  return app;
 }
 
-startServer();
+// Only listen if this file is run directly
+if (import.meta.url === `file://${process.argv[1]}`) {
+  const PORT = 3000;
+  createApp().then(app => {
+    app.listen(PORT, "0.0.0.0", () => {
+      console.log(`Server running on http://localhost:${PORT}`);
+    });
+  });
+}
