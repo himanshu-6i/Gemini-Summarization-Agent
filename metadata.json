@@ -1,0 +1,5 @@
+{
+  "name": "Gemini Summarization Agent",
+  "description": "A simple AI agent built with Gemini that summarizes text via an HTTP endpoint.",
+  "requestFramePermissions": []
+}
